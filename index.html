@@ -6,64 +6,104 @@
   <title>Daily Schedule Planner</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 2rem;
-      background: #f5f5f5;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      transition: background 0.4s;
     }
     h1 {
       text-align: center;
+      color: #333;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      animation: bounceIn 0.6s ease;
+    }
+    @keyframes bounceIn {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
     .planner {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       background: white;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      animation: fadeIn 0.8s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .task {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #f0f0f0;
-      padding: 0.5rem;
+      background: #f8f9fa;
+      padding: 0.8rem;
       margin-bottom: 0.5rem;
-      border-radius: 5px;
+      border-left: 5px solid #007bff;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    .task:hover {
+      transform: scale(1.02);
+      background: #e9ecef;
     }
     .task.done {
       text-decoration: line-through;
       opacity: 0.6;
+      border-left-color: #6c757d;
     }
     .task span {
       flex-grow: 1;
       margin-left: 1rem;
     }
     input[type="text"], input[type="time"] {
-      padding: 0.5rem;
-      margin: 0.3rem 0;
+      padding: 0.6rem;
+      margin: 0.4rem 0;
       width: 100%;
       box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border 0.3s;
+    }
+    input:focus {
+      border-color: #007bff;
+      outline: none;
     }
     button {
-      margin-top: 0.5rem;
-      padding: 0.5rem;
+      margin-top: 0.7rem;
+      padding: 0.7rem;
       width: 100%;
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
     }
     button:hover {
       background: #0056b3;
+      transform: translateY(-2px);
     }
     .controls button {
       margin-top: 0;
       margin-left: 5px;
       width: auto;
-      padding: 0.3rem 0.6rem;
-      background: #dc3545;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+      border-radius: 6px;
     }
     .controls button.edit {
       background: #28a745;
@@ -71,15 +111,20 @@
     .controls button.done {
       background: #17a2b8;
     }
+    .controls button.delete {
+      background: #dc3545;
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
   </style>
 </head>
 <body>
-
-  <h1>Daily Schedule Planner</h1>
+  <h1>🗓️ Daily Schedule Planner</h1>
   <div class="planner">
     <input type="time" id="task-time" />
     <input type="text" id="task-desc" placeholder="Enter your task..." />
-    <button onclick="addTask()">Add Task</button>
+    <button onclick="addTask()">➕ Add Task</button>
     <div id="task-list"></div>
   </div>
 
@@ -93,16 +138,17 @@
     function renderTasks() {
       const list = document.getElementById('task-list');
       list.innerHTML = '';
+      tasks.sort((a, b) => a.time.localeCompare(b.time));
       tasks.forEach((task, index) => {
         const taskDiv = document.createElement('div');
-        taskDiv.className = 'task' + (task.done ? ' done' : '');
+        taskDiv.className = 'task fade-in' + (task.done ? ' done' : '');
         taskDiv.innerHTML = `
           <strong>${task.time}</strong>
           <span>${task.desc}</span>
           <div class="controls">
             <button class="done" onclick="toggleDone(${index})">✔</button>
             <button class="edit" onclick="editTask(${index})">✎</button>
-            <button onclick="deleteTask(${index})">🗑</button>
+            <button class="delete" onclick="deleteTask(${index})">🗑</button>
           </div>
         `;
         list.appendChild(taskDiv);
@@ -116,9 +162,20 @@
         alert("Please enter both time and description.");
         return;
       }
+
+      const [h, m] = time.split(":" ).map(Number);
+      const now = new Date();
+      const taskTime = new Date();
+      taskTime.setHours(h, m, 0, 0);
+
+      if (taskTime < now) {
+        alert(`⚠️ Warning: You’ve added a task for an earlier time today (${time})!`);
+      }
+
       tasks.push({ time, desc, done: false });
       saveTasks();
       renderTasks();
+      scheduleReminders();
       document.getElementById('task-time').value = '';
       document.getElementById('task-desc').value = '';
     }
@@ -145,10 +202,52 @@
         tasks[index].desc = newDesc;
         saveTasks();
         renderTasks();
+        scheduleReminders();
       }
     }
 
+    function scheduleReminders() {
+      const now = new Date();
+      tasks.forEach(task => {
+        const [hour, minute] = task.time.split(":" ).map(Number);
+        const taskTime = new Date();
+        taskTime.setHours(hour);
+        taskTime.setMinutes(minute);
+        taskTime.setSeconds(0);
+
+        const reminderTime = new Date(taskTime.getTime() - 30 * 60000);
+        const delay = reminderTime.getTime() - now.getTime();
+
+        if (delay > 0) {
+          setTimeout(() => {
+            alert(`⏰ Reminder: Your task "${task.desc}" is scheduled at ${task.time}`);
+          }, delay);
+        } else if (taskTime < now && !task.done) {
+          alert(`⚠️ Missed Task: "${task.desc}" scheduled at ${task.time} has already passed!`);
+        }
+      });
+    }
+
+    function scheduleDailyReset() {
+      const now = new Date();
+      const resetTime = new Date();
+      resetTime.setHours(0, 0, 1, 0);
+      if (now > resetTime) {
+        resetTime.setDate(resetTime.getDate() + 1);
+      }
+      const delay = resetTime.getTime() - now.getTime();
+
+      setTimeout(() => {
+        tasks = [];
+        saveTasks();
+        renderTasks();
+        scheduleDailyReset();
+      }, delay);
+    }
+
     renderTasks();
+    scheduleReminders();
+    scheduleDailyReset();
   </script>
 </body>
 </html>
