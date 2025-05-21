@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Daily Schedule Planner</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
@@ -12,6 +12,7 @@
       --card-blur: 20px;
       --primary: linear-gradient(90deg, #4e9af1, #4fd1c5);
       --radius: 20px;
+      --glow-color: #4e9af1;
     }
     * {
       box-sizing: border-box;
@@ -33,7 +34,9 @@
       font-size: 2.5rem;
       margin: 1rem 0 1.5rem;
       color: white;
-      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+      text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
     }
     .planner {
       width: 100%;
@@ -44,6 +47,12 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
       padding: 2rem;
       margin-bottom: 2rem;
+      transition: box-shadow 0.3s ease;
+    }
+    .planner:hover {
+      box-shadow:
+        0 0 10px 2px rgba(78,154,241,0.6),
+        0 0 20px 4px rgba(78,154,241,0.4);
     }
     input[type="text"], input[type="time"] {
       padding: 0.8rem;
@@ -53,10 +62,11 @@
       margin-bottom: 1rem;
       font-size: 1rem;
       background: white;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
-    input:focus {
+    input[type="text"]:focus, input[type="time"]:focus {
       border-color: #4e9af1;
+      box-shadow: 0 0 8px rgba(78,154,241,0.6);
       outline: none;
     }
     button {
@@ -66,21 +76,22 @@
       border: none;
       border-radius: 12px;
       color: white;
-      font-weight: bold;
-      font-size: 1rem;
+      font-weight: 700;
+      font-size: 1.1rem;
       cursor: pointer;
       transition: all 0.3s ease;
       margin-top: 0.5rem;
-
-      /* Glow effect */
-      box-shadow: 0 0 8px #4fd1c5, 0 0 15px #4e9af1;
+      box-shadow:
+        0 0 8px rgba(78,154,241,0.7),
+        inset 0 -3px 5px rgba(0,0,0,0.15);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      user-select: none;
     }
     button:hover {
       transform: scale(1.05);
       box-shadow:
-        0 0 12px #4fd1c5,
-        0 0 25px #4e9af1,
-        0 0 40px #4e9af1;
+        0 0 14px 4px rgba(78,154,241,0.9),
+        inset 0 -3px 5px rgba(0,0,0,0.2);
     }
     .task {
       display: flex;
@@ -92,10 +103,13 @@
       border-radius: 12px;
       margin-top: 1rem;
       animation: fadeIn 0.5s ease;
-
-      /* Glow effect */
-      box-shadow: 0 0 8px rgba(78, 154, 241, 0.5),
-                  0 0 15px rgba(79, 209, 197, 0.4);
+      box-shadow:
+        0 0 5px rgba(78,154,241,0.3);
+      transition: box-shadow 0.3s ease;
+    }
+    .task:hover {
+      box-shadow:
+        0 0 15px 3px rgba(78,154,241,0.7);
     }
     .task.done {
       opacity: 0.5;
@@ -108,18 +122,20 @@
     }
     .controls button {
       padding: 0.4rem 0.6rem;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       width: auto;
       background: #e2e8f0;
       color: #1e293b;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      transition: background 0.3s ease;
-      box-shadow: none;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      user-select: none;
     }
     .controls button:hover {
       background: #cbd5e1;
+      box-shadow: 0 0 10px rgba(78,154,241,0.7);
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -146,176 +162,199 @@
     <input type="time" id="task-time" />
     <input type="text" id="task-desc" placeholder="Add a new task..." />
     <button id="add-task-btn">➕ Add Task</button>
-    <button id="generate-tasks-btn">🎲 Generate Random Tasks</button>
-    <button id="export-pdf-btn">📄 Export as PDF</button>
+    <button onclick="generateRandomTasks()">🎲 Generate Random Tasks</button>
+    <button onclick="exportPDF()">📄 Export as PDF</button>
     <div id="task-list"></div>
   </div>
 
-  <script>
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
+<script>
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-    function notifyUser(title, body) {
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, {
-          body: body,
-          icon: "https://cdn-icons-png.flaticon.com/512/3063/3063825.png"
-        });
-      }
-    }
+  function saveTasks() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
 
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  function renderTasks() {
+    const list = document.getElementById('task-list');
+    list.innerHTML = '';
+    tasks.sort((a, b) => a.time.localeCompare(b.time));
+    tasks.forEach((task, index) => {
+      const div = document.createElement('div');
+      div.className = 'task' + (task.done ? ' done' : '');
+      div.innerHTML = `
+        <strong>${task.time}</strong>
+        <span style="flex:1; margin-left: 1rem;">${task.desc}</span>
+        <div class="controls">
+          <button onclick="toggleDone(${index})" title="Toggle done">✔</button>
+          <button onclick="editTask(${index})" title="Edit task">✏️</button>
+          <button onclick="deleteTask(${index})" title="Delete task">🗑</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
 
-    function saveTasks() {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-
-    function renderTasks() {
-      const list = document.getElementById('task-list');
-      list.innerHTML = '';
-      tasks.sort((a, b) => a.time.localeCompare(b.time));
-      tasks.forEach((task, index) => {
-        const div = document.createElement('div');
-        div.className = 'task' + (task.done ? ' done' : '');
-        div.innerHTML = `
-          <strong>${task.time}</strong>
-          <span style="flex:1; margin-left: 1rem;">${task.desc}</span>
-          <div class="controls">
-            <button onclick="toggleDone(${index})">✔</button>
-            <button onclick="editTask(${index})">✏️</button>
-            <button onclick="deleteTask(${index})">🗑</button>
-          </div>
-        `;
-        list.appendChild(div);
+  function notifyUser(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, {
+        body: body,
+        icon: "https://cdn-icons-png.flaticon.com/512/3063/3063825.png"
       });
     }
+  }
 
-    function addTask() {
-      const time = document.getElementById('task-time').value;
-      const desc = document.getElementById('task-desc').value;
-      if (!time || !desc) return alert("Enter time and description");
-
-      tasks.push({ time, desc, done: false });
-      saveTasks();
-      renderTasks();
-      scheduleReminders();
-      document.getElementById('task-time').value = '';
-      document.getElementById('task-desc').value = '';
+  // Request permission on user interaction before adding task
+  async function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+      alert("This browser does not support notifications.");
+      return false;
     }
-
-    function toggleDone(index) {
-      tasks[index].done = !tasks[index].done;
-      saveTasks();
-      renderTasks();
+    if (Notification.permission === "granted") {
+      return true;
+    } else if (Notification.permission !== "denied") {
+      const permission = await Notification.requestPermission();
+      return permission === "granted";
+    } else {
+      alert("You have denied notification permissions. Enable them in browser settings to get reminders.");
+      return false;
     }
+  }
 
-    function deleteTask(index) {
-      if (confirm("Delete this task?")) {
-        tasks.splice(index, 1);
-        saveTasks();
-        renderTasks();
-      }
-    }
+  async function addTask() {
+    const time = document.getElementById('task-time').value;
+    const desc = document.getElementById('task-desc').value.trim();
+    if (!time || !desc) return alert("Please enter both time and description.");
 
-    function editTask(index) {
-      const newTime = prompt("Edit time", tasks[index].time);
-      const newDesc = prompt("Edit task", tasks[index].desc);
-      if (newTime && newDesc) {
-        tasks[index].time = newTime;
-        tasks[index].desc = newDesc;
-        saveTasks();
-        renderTasks();
-        scheduleReminders();
-      }
-    }
+    // Request notification permission on adding first task
+    const hasPermission = await requestNotificationPermission();
 
-    function scheduleReminders() {
-      const now = new Date();
-      tasks.forEach(task => {
-        if (!task.time.includes(":")) return;
-        const [h, m] = task.time.split(":" ).map(Number);
-        const taskDate = new Date();
-        taskDate.setHours(h, m, 0);
-
-        const remindTime = new Date(taskDate.getTime() - 1800000); // 30 mins before
-        const preDelay = remindTime.getTime() - now.getTime();
-        const postDelay = taskDate.getTime() - now.getTime();
-
-        if (preDelay > 0) {
-          setTimeout(() => {
-            notifyUser("🔔 Task Reminder", `"${task.desc}" at ${task.time}`);
-          }, preDelay);
-        }
-
-        if (postDelay > 0) {
-          setTimeout(() => {
-            notifyUser("⌛ Task Time Over", `"${task.desc}" scheduled at ${task.time} is now past.`);
-          }, postDelay);
-        }
-      });
-    }
-
-    function generateRandomTasks() {
-      const randomDescriptions = [
-        "Read a book 📚",
-        "Do a workout 🏋️",
-        "Write journal ✍️",
-        "Meditation 🧘",
-        "Study for 30 mins 📖",
-        "Take a walk 🚶",
-        "Clean workspace 🧹",
-        "Call a friend ☎️",
-        "Plan tomorrow 📅",
-        "Watch a tutorial 💻"
-      ];
-      for (let i = 0; i < 3; i++) {
-        const randomDesc = randomDescriptions[Math.floor(Math.random() * randomDescriptions.length)];
-        const randomHour = Math.floor(Math.random() * 24);
-        const randomMinute = Math.floor(Math.random() * 60);
-        const time = `${String(randomHour).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}`;
-
-        tasks.push({ time, desc: randomDesc, done: false });
-      }
-      saveTasks();
-      renderTasks();
-      scheduleReminders();
-    }
-
-    function scheduleDailyReset() {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(0, 0, 1);
-      if (now > midnight) midnight.setDate(midnight.getDate() + 1);
-      setTimeout(() => {
-        tasks = [];
-        saveTasks();
-        renderTasks();
-        scheduleDailyReset();
-      }, midnight.getTime() - now.getTime());
-    }
-
-    function exportPDF() {
-      const element = document.querySelector(".planner");
-      const opt = {
-        margin:       0.5,
-        filename:     'Daily_Schedule.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      html2pdf().set(opt).from(element).save();
-    }
-
-    // Attach event listeners to buttons
-    document.getElementById('add-task-btn').addEventListener('click', addTask);
-    document.getElementById('generate-tasks-btn').addEventListener('click', generateRandomTasks);
-    document.getElementById('export-pdf-btn').addEventListener('click', exportPDF);
-
-    // Initial render and schedule
+    tasks.push({ time, desc, done: false });
+    saveTasks();
     renderTasks();
     scheduleReminders();
-    scheduleDailyReset();
-  </script>
+
+    document.getElementById('task-time').value = '';
+    document.getElementById('task-desc').value = '';
+
+    if (hasPermission) {
+      notifyUser("Task added ✅", `"${desc}" scheduled at ${time}`);
+    }
+  }
+
+  function toggleDone(index) {
+    tasks[index].done = !tasks[index].done;
+    saveTasks();
+    renderTasks();
+  }
+
+  function deleteTask(index) {
+    if (confirm("Delete this task?")) {
+      tasks.splice(index, 1);
+      saveTasks();
+      renderTasks();
+    }
+  }
+
+  function editTask(index) {
+    const newTime = prompt("Edit time (HH:MM)", tasks[index].time);
+    const newDesc = prompt("Edit task description", tasks[index].desc);
+    if (newTime && newDesc) {
+      tasks[index].time = newTime;
+      tasks[index].desc = newDesc.trim();
+      saveTasks();
+      renderTasks();
+      scheduleReminders();
+    }
+  }
+
+  function scheduleReminders() {
+    // Clear any existing timers by reloading page resets timers,
+    // so only schedule for current session tasks.
+    // For simplicity, we don't persist timers across sessions.
+    // So reminders only work while page is open.
+
+    const now = new Date();
+
+    tasks.forEach(task => {
+      if (!task.time.includes(":")) return;
+      const [h, m] = task.time.split(":").map(Number);
+      const taskDate = new Date();
+      taskDate.setHours(h, m, 0, 0);
+
+      // If task time already passed today, skip or schedule for tomorrow
+      if (taskDate < now) return;
+
+      // Reminder 30 minutes before task time
+      const remindTime = new Date(taskDate.getTime() - 30 * 60000);
+      const preDelay = remindTime.getTime() - now.getTime();
+      if (preDelay > 0) {
+        setTimeout(() => {
+          notifyUser("🔔 Reminder: Task soon", `"${task.desc}" at ${task.time} in 30 minutes.`);
+        }, preDelay);
+      }
+
+      // Notification at task time
+      const postDelay = taskDate.getTime() - now.getTime();
+      if (postDelay > 0) {
+        setTimeout(() => {
+          notifyUser("⌛ Task Time!", `"${task.desc}" scheduled at ${task.time} is starting now.`);
+        }, postDelay);
+      }
+    });
+  }
+
+  function generateRandomTasks() {
+    const randomDescriptions = [
+      "Read a book 📚",
+      "Do a workout 🏋️",
+      "Write journal ✍️",
+      "Meditation 🧘",
+      "Study for 30 mins 📖",
+      "Take a walk 🚶",
+      "Clean workspace 🧹",
+      "Call a friend ☎️",
+      "Plan tomorrow 📅",
+      "Watch a tutorial 💻"
+    ];
+    for (let i = 0; i < 3; i++) {
+      const randomDesc = randomDescriptions[Math.floor(Math.random() * randomDescriptions.length)];
+      const randomHour = Math.floor(Math.random() * 24);
+      const randomMinute = Math.floor(Math.random() * 60);
+      const time = `${String(randomHour).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}`;
+
+      tasks.push({ time, desc: randomDesc, done: false });
+    }
+    saveTasks();
+    renderTasks();
+    scheduleReminders();
+  }
+
+  function scheduleDailyReset() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(0, 0, 1);
+    if (now > midnight) midnight.setDate(midnight.getDate() + 1);
+    setTimeout(() => {
+      tasks = [];
+      saveTasks();
+      renderTasks();
+      scheduleDailyReset();
+    }, midnight.getTime() - now.getTime());
+  }
+
+  function exportPDF() {
+    const element = document.querySelector('.planner');
+    html2pdf()
+      .set({ margin: 0.5, filename: 'daily_schedule.pdf', image: { type: 'jpeg', quality: 0.98 } })
+      .from(element)
+      .save();
+  }
+
+  document.getElementById('add-task-btn').addEventListener('click', addTask);
+
+  renderTasks();
+  scheduleReminders();
+  scheduleDailyReset();
+</script>
 </body>
 </html>
