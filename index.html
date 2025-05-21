@@ -1,160 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Daily Schedule Planner</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <style>
-    :root {
-      --card-bg: linear-gradient(145deg, #f0f9ff, #e0f7fa);
-      --card-blur: 20px;
-      --primary: linear-gradient(90deg, #4e9af1, #4fd1c5);
-      --radius: 20px;
-      --glow-color: #4e9af1;
-    }
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      color: #1e3a8a;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily Schedule Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --card-bg: linear-gradient(145deg, #f0f9ff, #e0f7fa);
+    --card-blur: 20px;
+    --primary: linear-gradient(90deg, #4e9af1, #4fd1c5);
+    --radius: 20px;
+    --glow-color: #4e9af1;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 1rem;
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    color: #1e3a8a;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin: 1rem 0 1.5rem;
+    color: white;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+  }
+  .planner {
+    width: 100%;
+    max-width: 500px;
+    background: var(--card-bg);
+    backdrop-filter: blur(var(--card-blur));
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  input[type="text"], input[type="time"] {
+    padding: 0.8rem;
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    background: white;
+    transition: border-color 0.3s;
+  }
+  input:focus {
+    border-color: var(--glow-color);
+    outline: none;
+    box-shadow: 0 0 8px var(--glow-color);
+  }
+  button {
+    padding: 0.8rem;
+    width: 100%;
+    background-image: var(--primary);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+    box-shadow: 0 0 8px transparent;
+  }
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px var(--glow-color);
+  }
+  .task {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(120deg, #e0f2fe, #f0f9ff);
+    border-left: 6px solid var(--glow-color);
+    padding: 1rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+    animation: fadeIn 0.5s ease;
+  }
+  .task.done {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+  .controls {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .controls button {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    width: auto;
+    background: #e2e8f0;
+    color: #1e293b;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 0 5px transparent;
+  }
+  .controls button:hover {
+    background: #cbd5e1;
+    box-shadow: 0 0 10px var(--glow-color);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 600px) {
     h1 {
-      text-align: center;
-      font-size: 2.5rem;
-      margin: 1rem 0 1.5rem;
-      color: white;
-      text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.4);
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
+      font-size: 2rem;
     }
     .planner {
-      width: 100%;
-      max-width: 500px;
-      background: var(--card-bg);
-      backdrop-filter: blur(var(--card-blur));
-      border-radius: var(--radius);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      padding: 2rem;
-      margin-bottom: 2rem;
-      transition: box-shadow 0.3s ease;
-    }
-    .planner:hover {
-      box-shadow:
-        0 0 10px 2px rgba(78,154,241,0.6),
-        0 0 20px 4px rgba(78,154,241,0.4);
-    }
-    input[type="text"], input[type="time"] {
-      padding: 0.8rem;
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid #e0e0e0;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      background: white;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    input[type="text"]:focus, input[type="time"]:focus {
-      border-color: #4e9af1;
-      box-shadow: 0 0 8px rgba(78,154,241,0.6);
-      outline: none;
-    }
-    button {
-      padding: 0.8rem;
-      width: 100%;
-      background-image: var(--primary);
-      border: none;
-      border-radius: 12px;
-      color: white;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 0.5rem;
-      box-shadow:
-        0 0 8px rgba(78,154,241,0.7),
-        inset 0 -3px 5px rgba(0,0,0,0.15);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      user-select: none;
-    }
-    button:hover {
-      transform: scale(1.05);
-      box-shadow:
-        0 0 14px 4px rgba(78,154,241,0.9),
-        inset 0 -3px 5px rgba(0,0,0,0.2);
+      padding: 1.2rem;
     }
     .task {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(120deg, #e0f2fe, #f0f9ff);
-      border-left: 6px solid #4e9af1;
-      padding: 1rem;
-      border-radius: 12px;
-      margin-top: 1rem;
-      animation: fadeIn 0.5s ease;
-      box-shadow:
-        0 0 5px rgba(78,154,241,0.3);
-      transition: box-shadow 0.3s ease;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
     }
-    .task:hover {
-      box-shadow:
-        0 0 15px 3px rgba(78,154,241,0.7);
-    }
-    .task.done {
-      opacity: 0.5;
-      text-decoration: line-through;
-      box-shadow: none;
-    }
-    .controls {
-      display: flex;
-      gap: 0.4rem;
-    }
-    .controls button {
-      padding: 0.4rem 0.6rem;
-      font-size: 0.9rem;
-      width: auto;
-      background: #e2e8f0;
-      color: #1e293b;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 0 6px rgba(0,0,0,0.1);
-      user-select: none;
-    }
-    .controls button:hover {
-      background: #cbd5e1;
-      box-shadow: 0 0 10px rgba(78,154,241,0.7);
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 2rem;
-      }
-      .planner {
-        padding: 1.2rem;
-      }
-      .task {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <h1>📆 Daily Planner</h1>
@@ -162,199 +138,205 @@
     <input type="time" id="task-time" />
     <input type="text" id="task-desc" placeholder="Add a new task..." />
     <button id="add-task-btn">➕ Add Task</button>
-    <button onclick="generateRandomTasks()">🎲 Generate Random Tasks</button>
-    <button onclick="exportPDF()">📄 Export as PDF</button>
+    <button id="generate-btn">🎲 Generate Random Tasks</button>
+    <button id="export-btn">📄 Export as PDF</button>
     <div id="task-list"></div>
   </div>
 
-<script>
-  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let notificationPermissionGranted = false;
 
-  function saveTasks() {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+          notificationPermissionGranted = permission === 'granted';
+        });
+      }
+    }
 
-  function renderTasks() {
-    const list = document.getElementById('task-list');
-    list.innerHTML = '';
-    tasks.sort((a, b) => a.time.localeCompare(b.time));
-    tasks.forEach((task, index) => {
-      const div = document.createElement('div');
-      div.className = 'task' + (task.done ? ' done' : '');
-      div.innerHTML = `
-        <strong>${task.time}</strong>
-        <span style="flex:1; margin-left: 1rem;">${task.desc}</span>
-        <div class="controls">
-          <button onclick="toggleDone(${index})" title="Toggle done">✔</button>
-          <button onclick="editTask(${index})" title="Edit task">✏️</button>
-          <button onclick="deleteTask(${index})" title="Delete task">🗑</button>
-        </div>
-      `;
-      list.appendChild(div);
-    });
-  }
+    function notifyUser(title, body) {
+      if ('Notification' in window && notificationPermissionGranted) {
+        new Notification(title, {
+          body: body,
+          icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063825.png'
+        });
+      }
+    }
 
-  function notifyUser(title, body) {
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, {
-        body: body,
-        icon: "https://cdn-icons-png.flaticon.com/512/3063/3063825.png"
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      list.innerHTML = '';
+      tasks.sort((a, b) => a.time.localeCompare(b.time));
+      tasks.forEach((task, index) => {
+        const div = document.createElement('div');
+        div.className = 'task' + (task.done ? ' done' : '');
+        div.innerHTML = `
+          <strong>${task.time}</strong>
+          <span style="flex:1; margin-left: 1rem;">${task.desc}</span>
+          <div class="controls">
+            <button onclick="toggleDone(${index})">✔</button>
+            <button onclick="editTask(${index})">✏️</button>
+            <button onclick="deleteTask(${index})">🗑</button>
+          </div>
+        `;
+        list.appendChild(div);
       });
     }
-  }
 
-  // Request permission on user interaction before adding task
-  async function requestNotificationPermission() {
-    if (!("Notification" in window)) {
-      alert("This browser does not support notifications.");
-      return false;
+    function addTask() {
+      const timeInput = document.getElementById('task-time');
+      const descInput = document.getElementById('task-desc');
+      const time = timeInput.value;
+      const desc = descInput.value.trim();
+      if (!time || !desc) {
+        alert('Please enter both time and description');
+        return;
+      }
+
+      // Request notification permission on first add
+      if (!notificationPermissionGranted) {
+        Notification.requestPermission().then(permission => {
+          notificationPermissionGranted = permission === 'granted';
+          actuallyAddTask(time, desc);
+        });
+      } else {
+        actuallyAddTask(time, desc);
+      }
     }
-    if (Notification.permission === "granted") {
-      return true;
-    } else if (Notification.permission !== "denied") {
-      const permission = await Notification.requestPermission();
-      return permission === "granted";
-    } else {
-      alert("You have denied notification permissions. Enable them in browser settings to get reminders.");
-      return false;
+
+    function actuallyAddTask(time, desc) {
+      tasks.push({ time, desc, done: false });
+      saveTasks();
+      renderTasks();
+      scheduleReminders();
+      document.getElementById('task-time').value = '';
+      document.getElementById('task-desc').value = '';
+      notifyUser('Task Added', `Task "${desc}" scheduled at ${time}`);
     }
-  }
 
-  async function addTask() {
-    const time = document.getElementById('task-time').value;
-    const desc = document.getElementById('task-desc').value.trim();
-    if (!time || !desc) return alert("Please enter both time and description.");
-
-    // Request notification permission on adding first task
-    const hasPermission = await requestNotificationPermission();
-
-    tasks.push({ time, desc, done: false });
-    saveTasks();
-    renderTasks();
-    scheduleReminders();
-
-    document.getElementById('task-time').value = '';
-    document.getElementById('task-desc').value = '';
-
-    if (hasPermission) {
-      notifyUser("Task added ✅", `"${desc}" scheduled at ${time}`);
-    }
-  }
-
-  function toggleDone(index) {
-    tasks[index].done = !tasks[index].done;
-    saveTasks();
-    renderTasks();
-  }
-
-  function deleteTask(index) {
-    if (confirm("Delete this task?")) {
-      tasks.splice(index, 1);
+    function toggleDone(index) {
+      tasks[index].done = !tasks[index].done;
       saveTasks();
       renderTasks();
     }
-  }
 
-  function editTask(index) {
-    const newTime = prompt("Edit time (HH:MM)", tasks[index].time);
-    const newDesc = prompt("Edit task description", tasks[index].desc);
-    if (newTime && newDesc) {
-      tasks[index].time = newTime;
-      tasks[index].desc = newDesc.trim();
+    function deleteTask(index) {
+      if (confirm('Delete this task?')) {
+        tasks.splice(index, 1);
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function editTask(index) {
+      const newTime = prompt('Edit time (HH:MM)', tasks[index].time);
+      const newDesc = prompt('Edit task description', tasks[index].desc);
+      if (newTime && newDesc) {
+        tasks[index].time = newTime;
+        tasks[index].desc = newDesc;
+        saveTasks();
+        renderTasks();
+        scheduleReminders();
+      }
+    }
+
+    function scheduleReminders() {
+      // Clear all existing timers by reloading page will reset
+      // We will create timers anew for each task
+
+      // First, clear all previous timeouts by keeping track of IDs (advanced). 
+      // Here we just create new timers for demo purposes.
+
+      const now = new Date();
+
+      tasks.forEach(task => {
+        if (!task.time.includes(':')) return;
+
+        // Parse task time today
+        const [hours, minutes] = task.time.split(':').map(Number);
+        const taskTime = new Date();
+        taskTime.setHours(hours, minutes, 0, 0);
+
+        // If task time already passed today, skip scheduling
+        if (taskTime <= now) return;
+
+        // Reminder 30 minutes before task
+        const reminderTime = new Date(taskTime.getTime() - 30 * 60000);
+        if (reminderTime > now) {
+          const reminderDelay = reminderTime.getTime() - now.getTime();
+          setTimeout(() => {
+            notifyUser('⏰ Reminder', `Task "${task.desc}" is in 30 minutes at ${task.time}`);
+          }, reminderDelay);
+        }
+
+        // Notification at task time
+        const taskDelay = taskTime.getTime() - now.getTime();
+        setTimeout(() => {
+          notifyUser('✅ Task Time', `Task "${task.desc}" scheduled for now.`);
+        }, taskDelay);
+      });
+    }
+
+    function generateRandomTasks() {
+      const randomDescriptions = [
+        "Read a book 📚",
+        "Do a workout 🏋️",
+        "Write journal ✍️",
+        "Meditate 🧘",
+        "Study for 30 mins 📖",
+        "Take a walk 🚶",
+        "Clean workspace 🧹",
+        "Call a friend ☎️",
+        "Plan tomorrow 📅",
+        "Watch a tutorial 💻"
+      ];
+      for (let i = 0; i < 3; i++) {
+        const randomDesc = randomDescriptions[Math.floor(Math.random() * randomDescriptions.length)];
+        const randomHour = Math.floor(Math.random() * 24);
+        const randomMinute = Math.floor(Math.random() * 60);
+        const time = `${String(randomHour).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}`;
+
+        tasks.push({ time, desc: randomDesc, done: false });
+      }
       saveTasks();
       renderTasks();
       scheduleReminders();
     }
-  }
 
-  function scheduleReminders() {
-    // Clear any existing timers by reloading page resets timers,
-    // so only schedule for current session tasks.
-    // For simplicity, we don't persist timers across sessions.
-    // So reminders only work while page is open.
-
-    const now = new Date();
-
-    tasks.forEach(task => {
-      if (!task.time.includes(":")) return;
-      const [h, m] = task.time.split(":").map(Number);
-      const taskDate = new Date();
-      taskDate.setHours(h, m, 0, 0);
-
-      // If task time already passed today, skip or schedule for tomorrow
-      if (taskDate < now) return;
-
-      // Reminder 30 minutes before task time
-      const remindTime = new Date(taskDate.getTime() - 30 * 60000);
-      const preDelay = remindTime.getTime() - now.getTime();
-      if (preDelay > 0) {
-        setTimeout(() => {
-          notifyUser("🔔 Reminder: Task soon", `"${task.desc}" at ${task.time} in 30 minutes.`);
-        }, preDelay);
-      }
-
-      // Notification at task time
-      const postDelay = taskDate.getTime() - now.getTime();
-      if (postDelay > 0) {
-        setTimeout(() => {
-          notifyUser("⌛ Task Time!", `"${task.desc}" scheduled at ${task.time} is starting now.`);
-        }, postDelay);
-      }
-    });
-  }
-
-  function generateRandomTasks() {
-    const randomDescriptions = [
-      "Read a book 📚",
-      "Do a workout 🏋️",
-      "Write journal ✍️",
-      "Meditation 🧘",
-      "Study for 30 mins 📖",
-      "Take a walk 🚶",
-      "Clean workspace 🧹",
-      "Call a friend ☎️",
-      "Plan tomorrow 📅",
-      "Watch a tutorial 💻"
-    ];
-    for (let i = 0; i < 3; i++) {
-      const randomDesc = randomDescriptions[Math.floor(Math.random() * randomDescriptions.length)];
-      const randomHour = Math.floor(Math.random() * 24);
-      const randomMinute = Math.floor(Math.random() * 60);
-      const time = `${String(randomHour).padStart(2, '0')}:${String(randomMinute).padStart(2, '0')}`;
-
-      tasks.push({ time, desc: randomDesc, done: false });
+    function scheduleDailyReset() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 1, 0);
+      if (now > midnight) midnight.setDate(midnight.getDate() + 1);
+      setTimeout(() => {
+        tasks = [];
+        saveTasks();
+        renderTasks();
+        scheduleDailyReset();
+      }, midnight.getTime() - now.getTime());
     }
-    saveTasks();
+
+    function exportPDF() {
+      const element = document.querySelector('.planner');
+      html2pdf()
+        .set({ margin: 0.5, filename: 'daily_schedule.pdf', image: { type: 'jpeg', quality: 0.98 } })
+        .from(element)
+        .save();
+    }
+
+    document.getElementById('add-task-btn').addEventListener('click', addTask);
+    document.getElementById('generate-btn').addEventListener('click', generateRandomTasks);
+    document.getElementById('export-btn').addEventListener('click', exportPDF);
+
     renderTasks();
     scheduleReminders();
-  }
-
-  function scheduleDailyReset() {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(0, 0, 1);
-    if (now > midnight) midnight.setDate(midnight.getDate() + 1);
-    setTimeout(() => {
-      tasks = [];
-      saveTasks();
-      renderTasks();
-      scheduleDailyReset();
-    }, midnight.getTime() - now.getTime());
-  }
-
-  function exportPDF() {
-    const element = document.querySelector('.planner');
-    html2pdf()
-      .set({ margin: 0.5, filename: 'daily_schedule.pdf', image: { type: 'jpeg', quality: 0.98 } })
-      .from(element)
-      .save();
-  }
-
-  document.getElementById('add-task-btn').addEventListener('click', addTask);
-
-  renderTasks();
-  scheduleReminders();
-  scheduleDailyReset();
-</script>
+    scheduleDailyReset();
+  </script>
 </body>
 </html>
