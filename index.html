@@ -5,93 +5,119 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daily Schedule Planner</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
-      --card-bg: rgba(255, 255, 255, 0.25);
+      --card-bg: linear-gradient(145deg, #f0f9ff, #e0f7fa);
       --card-blur: 20px;
-      --primary: #4e9af1;
+      --primary: linear-gradient(90deg, #4e9af1, #4fd1c5);
       --radius: 20px;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
     body {
       font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
+      color: #1e3a8a;
+      padding: 2rem 1rem;
     }
     h1 {
       text-align: center;
-      color: #1e3a8a;
       font-size: 2.5rem;
-      margin: 1rem 0;
+      margin-bottom: 2rem;
+      color: white;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
     }
     .planner {
       width: 100%;
-      max-width: 500px;
+      max-width: 600px;
       background: var(--card-bg);
       backdrop-filter: blur(var(--card-blur));
       border-radius: var(--radius);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
       padding: 2rem;
       margin-bottom: 2rem;
-      color: #1e3a8a;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
     input[type="text"], input[type="time"] {
       padding: 0.8rem;
       width: 100%;
       border-radius: 12px;
-      border: none;
-      margin-bottom: 0.8rem;
+      border: 1px solid #e0e0e0;
       font-size: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      background: white;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      border-color: #4e9af1;
+      outline: none;
     }
     button {
       padding: 0.8rem;
       width: 100%;
-      background: var(--primary);
+      background-image: var(--primary);
       border: none;
       border-radius: 12px;
       color: white;
       font-weight: bold;
       font-size: 1rem;
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: all 0.3s ease;
     }
     button:hover {
       transform: scale(1.03);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
     .task {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      background: white;
-      border-left: 5px solid var(--primary);
-      padding: 0.8rem;
+      background: linear-gradient(120deg, #e0f2fe, #f0f9ff);
+      border-left: 6px solid #4e9af1;
+      padding: 1rem;
       border-radius: 12px;
-      margin-top: 1rem;
       animation: fadeIn 0.5s ease;
+      gap: 1rem;
+    }
+    .task strong {
+      flex: 0 0 auto;
+    }
+    .task span {
+      flex: 1 1 auto;
     }
     .task.done {
       opacity: 0.5;
       text-decoration: line-through;
     }
+    .controls {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 0.4rem;
+    }
     .controls button {
-      margin-left: 0.5rem;
       padding: 0.4rem 0.6rem;
       font-size: 0.8rem;
       width: auto;
-      background: #f1f5f9;
+      background: #e2e8f0;
       color: #1e293b;
       border-radius: 8px;
       border: none;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
     .controls button:hover {
-      background: #e2e8f0;
+      background: #cbd5e1;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -99,10 +125,14 @@
     }
     @media (max-width: 600px) {
       h1 {
-        font-size: 1.8rem;
+        font-size: 2rem;
       }
       .planner {
         padding: 1.2rem;
+      }
+      .task {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -113,6 +143,7 @@
     <input type="time" id="task-time" />
     <input type="text" id="task-desc" placeholder="Add a new task..." />
     <button onclick="addTask()">➕ Add Task</button>
+    <button onclick="exportPDF()">📄 Export as PDF</button>
     <div id="task-list"></div>
   </div>
 
@@ -145,7 +176,7 @@
         div.className = 'task' + (task.done ? ' done' : '');
         div.innerHTML = `
           <strong>${task.time}</strong>
-          <span style="flex:1; margin-left: 1rem;">${task.desc}</span>
+          <span>${task.desc}</span>
           <div class="controls">
             <button onclick="toggleDone(${index})">✔</button>
             <button onclick="editTask(${index})">✏️</button>
@@ -223,6 +254,18 @@
         renderTasks();
         scheduleDailyReset();
       }, midnight.getTime() - now.getTime());
+    }
+
+    function exportPDF() {
+      const element = document.querySelector(".planner");
+      const opt = {
+        margin:       0.5,
+        filename:     'Daily_Schedule.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
     }
 
     renderTasks();
